@@ -3,8 +3,7 @@
 #include "common/Common.hpp"
 #include "common/CompletionModel.hpp"
 #include "singletons/Settings.hpp"
-#include "widgets/helper/CompletionSelector.hpp"
-#include "widgets/helper/CompletionSelector.cpp"
+// #include "widgets/helper/CompletionSelector.hpp"
 
 #include <QMimeData>
 
