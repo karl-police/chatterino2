@@ -4,6 +4,7 @@
 #include <QKeyEvent>
 #include <QTextEdit>
 #include <pajlada/signals/signal.hpp>
+#include "widgets/helper/CompletionSelector.hpp"
 
 namespace chatterino {
 
@@ -41,6 +42,8 @@ private:
 
     QCompleter *completer_ = nullptr;
     bool completionInProgress_ = false;
+    
+    QObjectRef<CompletionSelector> emoteSelector_;
 
 private slots:
     void insertCompletion(const QString &completion);
