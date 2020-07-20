@@ -138,8 +138,8 @@ void ResizingTextEdit::keyPressEvent(QKeyEvent *event)
             if (isFirstWord) {
                 this->emoteSelector_->setAttribute(Qt::WA_DeleteOnClose);
                 
-                this->emoteSelector_->resize(int(300 * this->emotePopup_->scale()),
-                                          int(500 * this->emotePopup_->scale()));
+                this->emoteSelector_->resize(int(300 * this->emoteSelector_->scale()),
+                                          int(500 * this->emoteSelector_->scale()));
                 //this->emoteSelector_->loadChannel(this->split_->getChannel());
                 this->emoteSelector_->show();
                 this->emoteSelector_->activateWindow();
