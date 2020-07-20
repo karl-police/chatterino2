@@ -126,15 +126,16 @@ void ResizingTextEdit::keyPressEvent(QKeyEvent *event)
 
         auto *completionModel =
             static_cast<CompletionModel *>(this->completer_->model());
-
+        
+        this->emoteSelector_ = new CompletionSelector(this);
+        
         if (!this->completionInProgress_)
         {
             // First type pressing tab after modifying a message, we refresh our
             // completion model
             this->completer_->setModel(completionModel);
             completionModel->refresh(currentCompletionPrefix, isFirstWord);
-            /* if (isFirstWord) { 
-                this->emoteSelector_ = new CompletionSelector(this);
+            if (isFirstWord) {
                 this->emoteSelector_->setAttribute(Qt::WA_DeleteOnClose);
                 
                 this->emoteSelector_->resize(int(300 * this->emotePopup_->scale()),
@@ -142,7 +143,7 @@ void ResizingTextEdit::keyPressEvent(QKeyEvent *event)
                 //this->emoteSelector_->loadChannel(this->split_->getChannel());
                 this->emoteSelector_->show();
                 this->emoteSelector_->activateWindow();
-            }:*/
+            }:
             this->emoteSelector_->refresh(currentCompletionPrefix);
             this->completionInProgress_ = true;
             this->completer_->setCompletionPrefix(currentCompletionPrefix);
