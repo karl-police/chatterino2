@@ -13,6 +13,8 @@ using ChannelPtr = std::shared_ptr<Channel>;
 
 class CompletionSelector : public BaseWindow
 {
+    Q_OBJECT
+
 public:
     CompletionSelector(QWidget *parent = nullptr);
 
