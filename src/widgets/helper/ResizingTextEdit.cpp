@@ -185,7 +185,7 @@ void ResizingTextEdit::keyPressEvent(QKeyEvent *event)
         event->key() != Qt::Key_Super_R)
     {
         this->completionInProgress_ = false;
-        this->emoteSelector_->close();
+        //this->emoteSelector_->close();
     }
 
     if (!event->isAccepted())
