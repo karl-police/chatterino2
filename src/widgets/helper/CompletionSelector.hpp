@@ -19,7 +19,6 @@ public:
     CompletionSelector(QWidget *parent = nullptr);
 
     void loadChannel(ChannelPtr channel);
-    void loadEmojis();
 
     virtual void closeEvent(QCloseEvent *event) override;
 
@@ -28,8 +27,5 @@ public:
     void refresh(const QString matchString);
 
 private:
-    ChannelView *globalEmotesView_{};
-    ChannelView *channelEmotesView_{};
-    ChannelView *subEmotesView_{};
     ChannelView *viewEmojis_{};
 };
