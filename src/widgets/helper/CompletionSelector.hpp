@@ -25,7 +25,7 @@ public:
 
     pajlada::Signals::Signal<Link> linkClicked;
 
-    void matchList(const QString matchString);
+    void refresh(const QString matchString);
 
 private:
     ChannelView *globalEmotesView_{};
