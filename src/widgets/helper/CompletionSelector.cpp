@@ -44,7 +44,8 @@ CompletionSelector::CompletionSelector(QWidget *parent)
     
     
     this->viewEmojis_ = makeView("Emojis");
-    
+}
+
     void CompletionSelector::refresh(QString matchList)
     {
         auto &emojis = getApp()->emotes->emojis.emojis;
@@ -75,4 +76,3 @@ CompletionSelector::CompletionSelector(QWidget *parent)
         //getApp()->windows->setEmotePopupPos(this->pos());
         QWidget::closeEvent(event);
     }
-}
