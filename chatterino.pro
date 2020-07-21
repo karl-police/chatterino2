@@ -246,6 +246,7 @@ SOURCES += \
     src/widgets/helper/ChannelView.cpp \
     src/widgets/helper/ColorButton.cpp \
     src/widgets/helper/ComboBoxItemDelegate.cpp \
+    src/widgets/helper/CompletionSelector.cpp \
     src/widgets/helper/DebugPopup.cpp \
     src/widgets/helper/EditableModelView.cpp \
     src/widgets/helper/EffectLabel.cpp \
