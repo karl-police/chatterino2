@@ -29,3 +29,5 @@ public:
 private:
     ChannelView *viewEmojis_{};
 };
+    
+}} //namespace chatterino
