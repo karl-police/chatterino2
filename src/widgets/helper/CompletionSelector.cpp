@@ -41,7 +41,7 @@ CompletionSelector::CompletionSelector(QWidget *parent)
 
         return view;
     };
-}
+    
     
     this->viewEmojis_ = makeView("Emojis");
     
