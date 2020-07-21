@@ -30,4 +30,4 @@ private:
     ChannelView *viewEmojis_{};
 };
     
-}} //namespace chatterino
+} //namespace chatterino
