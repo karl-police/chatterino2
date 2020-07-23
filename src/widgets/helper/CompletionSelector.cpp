@@ -64,7 +64,7 @@ CompletionSelector::CompletionSelector(QWidget *parent)
 
         emojis.each([&builder, matchString](const auto &key, const auto &value) {
             
-            if (value.shortCodes.find(matchString) != std::string::npos) {
+            if (value->shortCodes.find(matchString) != std::string::npos) {
                 builder
                     .emplace<EmoteElement>(value->emote, MessageElementFlag::AlwaysShow)
                     ->setLink(
