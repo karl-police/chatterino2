@@ -1,5 +1,6 @@
 #include "CompletionSelector.hpp"
 
+#include "Application.hpp"
 #include "controllers/accounts/AccountController.hpp"
 #include "debug/Benchmark.hpp"
 #include "messages/Message.hpp"
