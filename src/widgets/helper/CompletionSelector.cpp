@@ -14,6 +14,9 @@
 #include <QShortcut>
 #include <QTabWidget>
 
+
+namespace chatterino {
+
 CompletionSelector::CompletionSelector(QWidget *parent)
     : BaseWindow(BaseWindow::EnableCustomFrame)
 {
@@ -76,3 +79,6 @@ CompletionSelector::CompletionSelector(QWidget *parent)
         //getApp()->windows->setEmotePopupPos(this->pos());
         QWidget::closeEvent(event);
     }
+    
+    
+} //namespace chatterino
