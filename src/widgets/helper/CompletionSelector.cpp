@@ -62,7 +62,7 @@ CompletionSelector::CompletionSelector(QWidget *parent)
         builder->flags.set(MessageFlag::Centered);
         builder->flags.set(MessageFlag::DisableCompactEmotes);
 
-        emojis.each([&builder](const auto &key, const auto &value) {
+        emojis.each([&builder, matchString](const auto &key, const auto &value) {
             
             if (value.name.find(matchString) != std::string::npos) {
                 builder
