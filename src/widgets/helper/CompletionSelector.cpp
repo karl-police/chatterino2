@@ -51,7 +51,7 @@ CompletionSelector::CompletionSelector(QWidget *parent)
     this->viewEmojis_ = makeView("Emojis");
 }
 
-    void CompletionSelector::refresh(QString matchList)
+    void CompletionSelector::refresh(QString matchString)
     {
         auto &emojis = getApp()->emotes->emojis.emojis;
 
@@ -64,7 +64,7 @@ CompletionSelector::CompletionSelector(QWidget *parent)
 
         emojis.each([&builder](const auto &key, const auto &value) {
             
-            if (value.name.find(matchList) != std::string::npos) {
+            if (value.name.find(matchString) != std::string::npos) {
                 builder
                     .emplace<EmoteElement>(value->emote, MessageElementFlag::AlwaysShow)
                     ->setLink(
