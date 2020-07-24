@@ -64,7 +64,7 @@ CompletionSelector::CompletionSelector(QWidget *parent)
 
         emojis.each([&builder, matchString](const auto &key, const auto &value) {
             
-            if (value->shortCodes[0] == true) {
+            if (value->shortCodes[0].contains(matchString, Qt::CaseInsensitive) == true) {
                 builder
                     .emplace<EmoteElement>(value->emote, MessageElementFlag::AlwaysShow)
                     ->setLink(
