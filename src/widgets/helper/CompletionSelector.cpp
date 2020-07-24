@@ -20,7 +20,6 @@
 
 
 namespace chatterino {
-namespace {
 CompletionSelector::CompletionSelector(QWidget *parent)
     : BaseWindow(BaseWindow::EnableCustomFrame)
 {
@@ -93,5 +92,4 @@ CompletionSelector::CompletionSelector(QWidget *parent)
         QWidget::closeEvent(event);
     }
     
-}
 } //namespace chatterino
