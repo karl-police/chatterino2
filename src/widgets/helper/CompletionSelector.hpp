@@ -20,7 +20,7 @@ public:
 
     void loadChannel(ChannelPtr channel);
 
-    void closeEvent(QCloseEvent *event) override;
+    virtual void closeEvent(QCloseEvent *event) override;
 
     pajlada::Signals::Signal<Link> linkClicked;
 
