@@ -10,6 +10,8 @@
 #include "singletons/WindowManager.hpp"
 #include "widgets/Notebook.hpp"
 #include "widgets/helper/ChannelView.hpp"
+#include "util/LayoutCreator.hpp"
+#include "widgets/Label.hpp"
 
 #include <QApplication>
 #include <QHBoxLayout>
@@ -25,35 +27,42 @@ CompletionSelector::CompletionSelector(QWidget *parent)
     this->setWindowTitle("Autocomplete Selector");
     this->setStayInScreenRect(true);
 
-    auto layout = new QVBoxLayout(this);
-    this->getLayoutContainer()->setLayout(layout);
-
-    auto notebook = new Notebook(this);
-    layout->addWidget(notebook);
-    layout->setMargin(0);
+    auto layout = LayoutCreator<QWidget>(this->getLayoutContainer())
+                      .setLayoutType<QHBoxLayout>();
+    
+    auto mainbox = layout.emplace<QVBoxLayout>().withoutMargin();
+    {
+        // emotebox
+        auto emotebox = mainbox.emplace<QHBoxLayout>().withoutMargin();
+        {
+            // emote item
+            auto emoteitem = emotebox.emplace<QVBoxLayout>().withoutMargin();
+            emoteitem.emplace<Label>("test")
+                .assign(&this->ui_.testLabel);
+        }
+    }
 
     auto clicked = [this](const Link &link) { this->linkClicked.invoke(link); };
 
-    auto makeView = [&](QString tabTitle) {
+   /* auto makeView = [&](QString tabTitle) {
         auto view = new ChannelView();
 
-        view->setOverrideFlags(MessageElementFlags{
+       view->setOverrideFlags(MessageElementFlags{
             MessageElementFlag::Default, MessageElementFlag::AlwaysShow,
             MessageElementFlag::EmoteImages});
         view->setEnableScrollingToBottom(false);
-        notebook->addPage(view, tabTitle);
         view->linkClicked.connect(clicked);
 
         return view;
     };
     
     
-    this->viewEmojis_ = makeView("Emojis");
+    this->viewEmojis_ = makeView("Emojis");*/
 }
 
     void CompletionSelector::refresh(QString matchString)
     {
-        auto &emojis = getApp()->emotes->emojis.emojis;
+        /*auto &emojis = getApp()->emotes->emojis.emojis;
 
         ChannelPtr emojiChannel(new Channel("", Channel::Type::None));
 
@@ -73,7 +82,9 @@ CompletionSelector::CompletionSelector(QWidget *parent)
         });
         emojiChannel->addMessage(builder.release());
 
-        this->viewEmojis_->setChannel(emojiChannel);
+        this->viewEmojis_->setChannel(emojiChannel);*/
+        
+        this->ui_.testLabel->setText(matchString);
     }
 
     void CompletionSelector::closeEvent(QCloseEvent *event)
