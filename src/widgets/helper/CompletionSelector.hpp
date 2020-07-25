@@ -17,7 +17,7 @@ class CompletionSelector : public BaseWindow
     //Q_OBJECT
 
 public:
-    CompletionSelector(QWidget *parent = nullptr);
+    CompletionSelector();
 
     void loadChannel(ChannelPtr channel);
 
