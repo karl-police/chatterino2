@@ -8,7 +8,6 @@
 #include "providers/twitch/TwitchChannel.hpp"
 #include "singletons/Emotes.hpp"
 #include "singletons/WindowManager.hpp"
-#include "widgets/Notebook.hpp"
 #include "widgets/helper/ChannelView.hpp"
 #include "util/LayoutCreator.hpp"
 #include "widgets/Label.hpp"
