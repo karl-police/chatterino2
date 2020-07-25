@@ -23,6 +23,10 @@ namespace chatterino {
 CompletionSelector::CompletionSelector()
     : BaseWindow(BaseWindow::EnableCustomFrame)
 {
+#ifdef Q_OS_LINUX
+    this->setWindowFlag(Qt::Popup);
+#endif
+
     this->setWindowTitle("Autocomplete Selector");
     this->setStayInScreenRect(true);
 
