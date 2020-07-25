@@ -20,7 +20,7 @@
 
 
 namespace chatterino {
-CompletionSelector::CompletionSelector(QWidget *parent)
+CompletionSelector::CompletionSelector()
     : BaseWindow(BaseWindow::EnableCustomFrame)
 {
     this->setWindowTitle("Autocomplete Selector");
