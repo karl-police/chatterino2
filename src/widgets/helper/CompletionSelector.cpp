@@ -20,7 +20,7 @@
 
 
 namespace chatterino {
-/*CompletionSelector::CompletionSelector()
+CompletionSelector::CompletionSelector()
     : BaseWindow(BaseWindow::EnableCustomFrame)
 {
 #ifdef Q_OS_LINUX
@@ -28,9 +28,9 @@ namespace chatterino {
 #endif
 
     this->setWindowTitle("Autocomplete Selector");
-    this->setStayInScreenRect(true);*/
+    this->setStayInScreenRect(true);
 
-    /*auto layout = LayoutCreator<QWidget>(this->getLayoutContainer())
+    auto layout = LayoutCreator<QWidget>(this->getLayoutContainer())
                       .setLayoutType<QHBoxLayout>();
     
     auto mainbox = layout.emplace<QVBoxLayout>().withoutMargin();
@@ -43,9 +43,9 @@ namespace chatterino {
             emoteitem.emplace<Label>("test")
                 .assign(&this->ui_.testLabel);
         }
-    }*/
+    }
 
-    //auto clicked = [this](const Link &link) { this->linkClicked.invoke(link); };
+    auto clicked = [this](const Link &link) { this->linkClicked.invoke(link); };
 
    /* auto makeView = [&](QString tabTitle) {
         auto view = new ChannelView();
@@ -61,10 +61,11 @@ namespace chatterino {
     
     
     this->viewEmojis_ = makeView("Emojis");*/
-//}
-
-    //void CompletionSelector::refresh(QString matchString)
-    //{
+}
+    
+    // refresh function
+    void CompletionSelector::refresh(QString matchString)
+    {
         /*auto &emojis = getApp()->emotes->emojis.emojis;
 
         ChannelPtr emojiChannel(new Channel("", Channel::Type::None));
@@ -87,13 +88,13 @@ namespace chatterino {
 
         this->viewEmojis_->setChannel(emojiChannel);*/
         
-        //this->ui_.testLabel->setText(matchString);
-    //}
+        this->ui_.testLabel->setText(matchString);
+    }
 
-    /*void CompletionSelector::closeEvent(QCloseEvent *event)
+    void CompletionSelector::closeEvent(QCloseEvent *event)
     {
         //getApp()->windows->setEmotePopupPos(this->pos());
         QWidget::closeEvent(event);
-    }*/
+    }
     
 } //namespace chatterino
