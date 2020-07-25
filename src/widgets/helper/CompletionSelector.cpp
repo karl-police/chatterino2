@@ -17,7 +17,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>
-#include <QShortcut>
+#include <QWidget>
 
 
 namespace chatterino {
