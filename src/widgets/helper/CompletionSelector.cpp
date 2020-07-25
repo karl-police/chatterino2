@@ -20,7 +20,7 @@
 
 
 namespace chatterino {
-CompletionSelector::CompletionSelector()
+/*CompletionSelector::CompletionSelector()
     : BaseWindow(BaseWindow::EnableCustomFrame)
 {
 #ifdef Q_OS_LINUX
@@ -28,7 +28,7 @@ CompletionSelector::CompletionSelector()
 #endif
 
     this->setWindowTitle("Autocomplete Selector");
-    this->setStayInScreenRect(true);
+    this->setStayInScreenRect(true);*/
 
     /*auto layout = LayoutCreator<QWidget>(this->getLayoutContainer())
                       .setLayoutType<QHBoxLayout>();
@@ -63,7 +63,7 @@ CompletionSelector::CompletionSelector()
     this->viewEmojis_ = makeView("Emojis");*/
 }
 
-    void CompletionSelector::refresh(QString matchString)
+    //void CompletionSelector::refresh(QString matchString)
     {
         /*auto &emojis = getApp()->emotes->emojis.emojis;
 
@@ -90,10 +90,10 @@ CompletionSelector::CompletionSelector()
         //this->ui_.testLabel->setText(matchString);
     }
 
-    void CompletionSelector::closeEvent(QCloseEvent *event)
+    /*void CompletionSelector::closeEvent(QCloseEvent *event)
     {
         //getApp()->windows->setEmotePopupPos(this->pos());
         QWidget::closeEvent(event);
-    }
+    }*/
     
 } //namespace chatterino
