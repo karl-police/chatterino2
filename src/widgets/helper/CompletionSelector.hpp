@@ -28,6 +28,11 @@ public:
 
 private:
     ChannelView *viewEmojis_{};
+    
+    
+    struct {
+        Label *testLabel = nullptr;
+    } ui_;
 };
     
 } //namespace chatterino
