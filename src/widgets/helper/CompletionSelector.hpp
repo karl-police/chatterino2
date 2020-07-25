@@ -10,6 +10,7 @@ struct Link;
 class ChannelView;
 class Channel;
 using ChannelPtr = std::shared_ptr<Channel>;
+class Label;
 
 class CompletionSelector : public BaseWindow
 {
