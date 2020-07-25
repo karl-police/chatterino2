@@ -28,7 +28,7 @@ public:
     void refresh(const QString matchString);
 
 private:
-    ChannelView *viewEmojis_{};
+    //ChannelView *viewEmojis_{};
       
     struct {
         Label *testLabel = nullptr;
