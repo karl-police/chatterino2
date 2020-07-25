@@ -20,8 +20,8 @@
 
 namespace chatterino {
 CompletionSelector::CompletionSelector()
-    //: BaseWindow(BaseWindow::EnableCustomFrame)
-    : BaseWindow({BaseWindow::TopMost, BaseWindow::Frameless})
+    : BaseWindow(BaseWindow::EnableCustomFrame)
+    // : BaseWindow({BaseWindow::Frameless})
 {
 #ifdef Q_OS_LINUX
     this->setWindowFlag(Qt::Popup);
