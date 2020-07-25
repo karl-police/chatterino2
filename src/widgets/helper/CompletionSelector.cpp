@@ -17,7 +17,6 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>
-#include <QWidget>
 
 
 namespace chatterino {
@@ -31,8 +30,10 @@ CompletionSelector::CompletionSelector()
     this->setWindowTitle("Autocomplete Selector");
     this->setStayInScreenRect(true);
 
-    auto layout = LayoutCreator<QWidget>(this->getLayoutContainer())
-                      .setLayoutType<QHBoxLayout>();
+    /*auto layout = LayoutCreator<QWidget>(this->getLayoutContainer())
+                      .setLayoutType<QHBoxLayout>();*/
+    LayoutCreator<QWidget> layoutWidget(this->getLayoutContainer());
+    auto layout = layoutWidget.setLayoutType<QVBoxLayout>().withoutMargin();
     
     auto mainbox = layout.emplace<QVBoxLayout>().withoutMargin();
     {
