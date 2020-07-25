@@ -12,7 +12,7 @@ class Channel;
 using ChannelPtr = std::shared_ptr<Channel>;
 class Label;
 
-class CompletionSelector : public BaseWindow
+class CompletionSelector final : public BaseWindow
 {
     //Q_OBJECT
 
