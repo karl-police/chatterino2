@@ -21,7 +21,8 @@
 
 namespace chatterino {
 CompletionSelector::CompletionSelector()
-    : BaseWindow(BaseWindow::EnableCustomFrame)
+    //: BaseWindow(BaseWindow::EnableCustomFrame)
+    : BaseWindow({BaseWindow::TopMost, BaseWindow::Frameless})
 {
 #ifdef Q_OS_LINUX
     this->setWindowFlag(Qt::Popup);
@@ -30,10 +31,8 @@ CompletionSelector::CompletionSelector()
     this->setWindowTitle("Autocomplete Selector");
     this->setStayInScreenRect(true);
 
-    /*auto layout = LayoutCreator<QWidget>(this->getLayoutContainer())
-                      .setLayoutType<QHBoxLayout>();*/
-    LayoutCreator<QWidget> layoutWidget(this->getLayoutContainer());
-    auto layout = layoutWidget.setLayoutType<QVBoxLayout>().withoutMargin();
+    auto layout = LayoutCreator<QWidget>(this->getLayoutContainer())
+                      .setLayoutType<QHBoxLayout>();
     
     auto mainbox = layout.emplace<QVBoxLayout>().withoutMargin();
     {
