@@ -61,10 +61,10 @@ namespace chatterino {
     
     
     this->viewEmojis_ = makeView("Emojis");*/
-}
+//}
 
     //void CompletionSelector::refresh(QString matchString)
-    {
+    //{
         /*auto &emojis = getApp()->emotes->emojis.emojis;
 
         ChannelPtr emojiChannel(new Channel("", Channel::Type::None));
@@ -88,7 +88,7 @@ namespace chatterino {
         this->viewEmojis_->setChannel(emojiChannel);*/
         
         //this->ui_.testLabel->setText(matchString);
-    }
+    //}
 
     /*void CompletionSelector::closeEvent(QCloseEvent *event)
     {
