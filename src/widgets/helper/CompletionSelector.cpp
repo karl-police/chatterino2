@@ -30,7 +30,7 @@ CompletionSelector::CompletionSelector()
     this->setWindowTitle("Autocomplete Selector");
     this->setStayInScreenRect(true);
 
-    auto layout = LayoutCreator<QWidget>(this->getLayoutContainer())
+    /*auto layout = LayoutCreator<QWidget>(this->getLayoutContainer())
                       .setLayoutType<QHBoxLayout>();
     
     auto mainbox = layout.emplace<QVBoxLayout>().withoutMargin();
@@ -43,7 +43,7 @@ CompletionSelector::CompletionSelector()
             emoteitem.emplace<Label>("test")
                 .assign(&this->ui_.testLabel);
         }
-    }
+    }*/
 
     auto clicked = [this](const Link &link) { this->linkClicked.invoke(link); };
 
@@ -87,7 +87,7 @@ CompletionSelector::CompletionSelector()
 
         this->viewEmojis_->setChannel(emojiChannel);*/
         
-        this->ui_.testLabel->setText(matchString);
+        //this->ui_.testLabel->setText(matchString);
     }
 
     void CompletionSelector::closeEvent(QCloseEvent *event)
