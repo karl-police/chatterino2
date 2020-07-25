@@ -45,7 +45,7 @@ namespace chatterino {
         }
     }*/
 
-    auto clicked = [this](const Link &link) { this->linkClicked.invoke(link); };
+    //auto clicked = [this](const Link &link) { this->linkClicked.invoke(link); };
 
    /* auto makeView = [&](QString tabTitle) {
         auto view = new ChannelView();
