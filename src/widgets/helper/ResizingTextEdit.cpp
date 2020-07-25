@@ -133,7 +133,7 @@ void ResizingTextEdit::keyPressEvent(QKeyEvent *event)
             // completion model
             this->completer_->setModel(completionModel);
             completionModel->refresh(currentCompletionPrefix, isFirstWord);
-            if (this->emoeSelector_) {
+            if (this->emoteSelector_) {
                 this->emoteSelector_->refresh(currentCompletionPrefix);   
             }
             if (isFirstWord) {
