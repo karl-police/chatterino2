@@ -36,7 +36,7 @@ CompletionSelector::CompletionSelector()
     auto mainbox = layout.emplace<QVBoxLayout>().withoutMargin();
     {
         // emotebox
-        auto emotebox = mainbox.emplace<QHBoxLayout>().withoutMargin();
+        auto emotebox = mainbox.emplace<QHBoxLayout>().withoutMargin().withoutSpacing();
         {
             // emote item
             auto emoteitem = emotebox.emplace<QVBoxLayout>().withoutMargin();
