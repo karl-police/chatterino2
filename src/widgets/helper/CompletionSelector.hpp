@@ -11,7 +11,7 @@ class ChannelView;
 class Channel;
 using ChannelPtr = std::shared_ptr<Channel>;
 
-class CompletionSelector final : public BaseWindow
+class CompletionSelector : public BaseWindow
 {
     //Q_OBJECT
 
