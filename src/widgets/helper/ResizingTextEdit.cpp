@@ -142,7 +142,6 @@ void ResizingTextEdit::keyPressEvent(QKeyEvent *event)
                 //this->emoteSelector_->loadChannel(this->split_->getChannel());
                 this->emoteSelector_->show();
             };
-            this->emoteSelector_->refresh(currentCompletionPrefix);
             this->completionInProgress_ = true;
             this->completer_->setCompletionPrefix(currentCompletionPrefix);
             this->completer_->complete();
