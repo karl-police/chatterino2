@@ -15,6 +15,7 @@
 
 #include <QApplication>
 #include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QLabel>
 #include <QShortcut>
 
