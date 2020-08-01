@@ -71,7 +71,7 @@ CompletionSelector::CompletionSelector()
     {
         QTableView *resultView = new QTableView();
         resultView->setModel(model);
-        this->ui_.test2Label->addWiget(resultView);
+        this->ui_.test2Layout->addWiget(resultView);
     }
     
     
