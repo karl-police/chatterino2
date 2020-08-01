@@ -43,8 +43,8 @@ CompletionSelector::CompletionSelector()
             auto emoteitem = emotebox.emplace<QVBoxLayout>().withoutMargin();
             emoteitem.emplace<Label>("test")
                 .assign(&this->ui_.testLabel);
-            emoteitem.emplace<Label>(" ")
-                .assign(&this->ui_.test2Label);
+            emoteitem.emplace<QHBoxLayout>()
+                .assign(&this->ui_.test2Layout);
         }
     }
 
