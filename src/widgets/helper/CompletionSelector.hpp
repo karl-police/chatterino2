@@ -24,6 +24,8 @@ public:
     virtual void closeEvent(QCloseEvent *event) override;
 
     pajlada::Signals::Signal<Link> linkClicked;
+    
+    void UpdateSelectorModel(QAbstractItemModel* model) const override;
 
     void refresh(const QString matchString);
 
