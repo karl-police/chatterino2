@@ -133,7 +133,20 @@ void ResizingTextEdit::keyPressEvent(QKeyEvent *event)
             // completion model
             this->completer_->setModel(completionModel);
             completionModel->refresh(currentCompletionPrefix, isFirstWord);
-
+            if (this->emoteSelector_) {
+                this->emoteSelector_->UpdateSelectorModel(completionModel);
+                this->emoteSelector_->refresh(currentCompletionPrefix);   
+            }
+            if (isFirstWord && !this->emoteSelector_) {
+                this->emoteSelector_ = new CompletionSelector();
+                this->emoteSelector_->setAttribute(Qt::WA_DeleteOnClose);
+                
+                this->emoteSelector_->resize(int(300 * this->emoteSelector_->scale()),
+                                          int(500 * this->emoteSelector_->scale()));
+                //this->emoteSelector_->loadChannel(this->split_->getChannel());
+                this->emoteSelector_->show();
+            };
+            
             this->completionInProgress_ = true;
             this->completer_->setCompletionPrefix(currentCompletionPrefix);
             this->completer_->complete();
