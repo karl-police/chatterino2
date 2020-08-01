@@ -70,7 +70,7 @@ CompletionSelector::CompletionSelector()
     void CompletionSelector::UpdateSelectorModel(QAbstractItemModel* model)
     {
         QTableView *resultView = new QTableView();
-        resultView.setModel(model);
+        resultView->setModel(model);
         this->ui_.test2Label->addWiget(resultView);
     }
     
