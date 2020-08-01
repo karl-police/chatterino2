@@ -25,6 +25,8 @@ public:
 
     pajlada::Signals::Signal<Link> linkClicked;
     
+    QTableView *resultView;
+    
     void UpdateSelectorModel(QAbstractItemModel* model) const override;
 
     void refresh(const QString matchString);
