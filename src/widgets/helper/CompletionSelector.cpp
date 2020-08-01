@@ -16,6 +16,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>
+#include <QtWidgets>
 
 
 namespace chatterino {
@@ -42,6 +43,8 @@ CompletionSelector::CompletionSelector()
             auto emoteitem = emotebox.emplace<QVBoxLayout>().withoutMargin();
             emoteitem.emplace<Label>("test")
                 .assign(&this->ui_.testLabel);
+            emoteitem.emplace<Label>(" ")
+                .assign(&this->ui_.test2Label);
         }
     }
 
@@ -62,6 +65,16 @@ CompletionSelector::CompletionSelector()
     
     this->viewEmojis_ = makeView("Emojis");*/
 }
+    
+    // UpdateSelectorModel function
+    void CompletionSelector::UpdateSelectorModel(QAbstractItemModel* model)
+    {
+        QTableView resultView = new QTableView();
+        resultView.setModel(model);
+        this->ui_.test2Label->addWiget(resultView);
+    }
+    
+    
     
     // refresh function
     void CompletionSelector::refresh(QString matchString)
