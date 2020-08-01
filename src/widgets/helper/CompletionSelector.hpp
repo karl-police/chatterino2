@@ -34,6 +34,7 @@ private:
       
     struct {
         Label *testLabel = nullptr;
+        Label *test2Label = nullptr;
     } ui_;
 };
     
