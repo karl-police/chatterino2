@@ -25,7 +25,7 @@ public:
 
     pajlada::Signals::Signal<Link> linkClicked;
     
-    void UpdateSelectorModel(QAbstractItemModel* model) const override;
+    void UpdateSelectorModel(QAbstractItemModel* model);
 
     void refresh(const QString matchString);
 
