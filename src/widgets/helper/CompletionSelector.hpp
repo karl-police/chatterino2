@@ -34,7 +34,7 @@ private:
       
     struct {
         Label *testLabel = nullptr;
-        Label *test2Label = nullptr;
+        QHBoxLayout *test2Layout = nullptr;
     } ui_;
 };
     
