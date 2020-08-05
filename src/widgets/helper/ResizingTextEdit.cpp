@@ -103,13 +103,20 @@ void ResizingTextEdit::keyPressEvent(QKeyEvent *event)
         QString nameSearch = currentText.mid(1);
         if (nameSearch.length() <= 2) {
             
+            auto *completionModelSelector =
+                static_cast<CompletionModel *>(this->completer_->model());
+            
+            this->completer_->setModel(completionModelSelector);
+            completionModelSelector->refresh(nameSearch);
+            
+            
             if (!this->emoteSelector_) {
                 this->emoteSelector_ = new CompletionSelector();
             }
             
             // Update the list
             if (this->emoteSelector_) {
-                this->emoteSelector_->UpdateSelectorModel(nameSearch);
+                this->emoteSelector_->UpdateSelectorModel(completionModelSelector);
                 this->emoteSelector_->refresh(nameSearch);   
             }
         }
