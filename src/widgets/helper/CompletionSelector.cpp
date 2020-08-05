@@ -45,9 +45,6 @@ CompletionSelector::CompletionSelector()
                 .assign(&this->ui_.testLabel);
             emoteitem.emplace<QHBoxLayout>()
                 .assign(&this->ui_.test2Layout);
-            
-            
-            this->ui_.test2Layout->addWidget(resultView);
         }
     }
 
