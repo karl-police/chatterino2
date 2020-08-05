@@ -87,12 +87,36 @@ QString ResizingTextEdit::textUnderCursor(bool *hadSpace) const
     return lastWord;
 }
 
+
 void ResizingTextEdit::keyPressEvent(QKeyEvent *event)
 {
     event->ignore();
 
     this->keyPressed.invoke(event);
-
+    
+    
+    // Perhaps this should go somewhere else at a later time
+    QString currentText = this->textUnderCursor();
+    
+    // Emote
+    if (currentText.startsWith() == ":") {
+        QString nameSearch = currentText.substr(1);
+        if (nameSearch.length() <= 2) {
+            
+            if (!this->emoteSelector_) {
+                this->emoteSelector_ = new CompletionSelector();
+            }
+            
+            // Update the list
+            if (this->emoteSelector_) {
+                this->emoteSelector_->UpdateSelectorModel(nameSearch);
+                this->emoteSelector_->refresh(nameSearch);   
+            }
+        }
+    }
+    
+    
+    
     bool doComplete =
         (event->key() == Qt::Key_Tab || event->key() == Qt::Key_Backtab) &&
         (event->modifiers() & Qt::ControlModifier) == Qt::NoModifier;
@@ -133,7 +157,7 @@ void ResizingTextEdit::keyPressEvent(QKeyEvent *event)
             // completion model
             this->completer_->setModel(completionModel);
             completionModel->refresh(currentCompletionPrefix, isFirstWord);
-            if (this->emoteSelector_) {
+            /*if (this->emoteSelector_) {
                 this->emoteSelector_->UpdateSelectorModel(completionModel);
                 this->emoteSelector_->refresh(currentCompletionPrefix);   
             }
@@ -145,7 +169,7 @@ void ResizingTextEdit::keyPressEvent(QKeyEvent *event)
                                           int(500 * this->emoteSelector_->scale()));
                 //this->emoteSelector_->loadChannel(this->split_->getChannel());
                 this->emoteSelector_->show();
-            };
+            };*/
             
             this->completionInProgress_ = true;
             this->completer_->setCompletionPrefix(currentCompletionPrefix);
