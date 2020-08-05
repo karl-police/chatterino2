@@ -100,7 +100,7 @@ void ResizingTextEdit::keyPressEvent(QKeyEvent *event)
     
     // Emote
     if (currentText.startsWith(":")) {
-        QString nameSearch = currentText.substr(1);
+        QString nameSearch = currentText.mid(1);
         if (nameSearch.length() <= 2) {
             
             if (!this->emoteSelector_) {
