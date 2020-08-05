@@ -46,7 +46,7 @@ CompletionSelector::CompletionSelector()
             emoteitem.emplace<QHBoxLayout>()
                 .assign(&this->ui_.test2Layout);
             
-            QTableView *resultView = new QTableView();
+            
             this->ui_.test2Layout->addWidget(resultView);
         }
     }
@@ -72,8 +72,14 @@ CompletionSelector::CompletionSelector()
     // UpdateSelectorModel function
     void CompletionSelector::UpdateSelectorModel(QAbstractItemModel* model)
     {
-        resultView->setModel(model);
-        this->ui_.test2Layout->setWidget(resultView);
+        if (!resultView) {
+            QTableView *resultView = new QTableView();
+            resultView->setModel(model);
+            this->ui_.test2Layout->addWidget(resultView);
+        }
+        else {
+            resultView->setModel(model);
+        }
     }
     
     
