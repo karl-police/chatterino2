@@ -69,14 +69,14 @@ CompletionSelector::CompletionSelector()
     // UpdateSelectorModel function
     void CompletionSelector::UpdateSelectorModel(QAbstractItemModel* model)
     {
-        if (!resultView) {
+       /*if (!resultView) {
             QTableView *resultView = new QTableView();
             resultView->setModel(model);
             this->ui_.test2Layout->addWidget(resultView);
         }
         else {
             resultView->setModel(model);
-        }
+        }*/
     }
     
     
