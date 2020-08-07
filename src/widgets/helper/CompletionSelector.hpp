@@ -31,6 +31,8 @@ public:
 
 private:
     //ChannelView *viewEmojis_{};
+    
+    QTableView *resultView;
       
     struct {
         Label *testLabel = nullptr;
