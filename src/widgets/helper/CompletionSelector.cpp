@@ -77,6 +77,9 @@ CompletionSelector::CompletionSelector()
         else {
             resultView->setModel(model);
         }*/
+        QTableView *resultView = new QTableView();
+        resultView->setModel(model);
+        this->ui_.test2Layout->addWidget(resultView);
     }
     
     
