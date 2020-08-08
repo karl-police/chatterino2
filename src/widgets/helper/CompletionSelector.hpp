@@ -26,14 +26,14 @@ public:
     pajlada::Signals::Signal<Link> linkClicked;
     
     void UpdateSelectorModel(QAbstractItemModel* model);
-
+    
     void refresh(const QString matchString);
 
 private:
     //ChannelView *viewEmojis_{};
     
     QTableView *resultView;
-      
+    
     struct {
         Label *testLabel = nullptr;
         QHBoxLayout *test2Layout = nullptr;
