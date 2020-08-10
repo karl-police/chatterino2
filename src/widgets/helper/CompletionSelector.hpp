@@ -1,4 +1,4 @@
-#pragma once
+vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv#pragma once
 
 #include "widgets/BaseWindow.hpp"
 
@@ -23,6 +23,8 @@ public:
 
     virtual void closeEvent(QCloseEvent *event) override;
 
+    QTableView *resultView;
+
     pajlada::Signals::Signal<Link> linkClicked;
     
     void UpdateSelectorModel(QAbstractItemModel* model);
@@ -31,8 +33,6 @@ public:
 
 private:
     //ChannelView *viewEmojis_{};
-    
-    QTableView *resultView;
     
     struct {
         Label *testLabel = nullptr;
