@@ -1,4 +1,4 @@
-vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv#pragma once
+#pragma once
 
 #include "widgets/BaseWindow.hpp"
 
