@@ -7,43 +7,62 @@
 
 #include <QPainter>
 
+namespace {
+
 // number of columns in grid mode
-#define GRID_NUM_COLS 3
+constexpr int GRID_NUM_COLS = 3;
+
+#ifdef Q_OS_WIN
+template <typename T>
+inline constexpr T *tooltipParentFor(T * /*desiredParent*/)
+{
+    return nullptr;
+}
+#else
+template <typename T>
+inline constexpr T *tooltipParentFor(T *desiredParent)
+{
+    return desiredParent;
+}
+#endif
+
+}  // namespace
 
 namespace chatterino {
-
-TooltipWidget *TooltipWidget::instance()
-{
-    static TooltipWidget *tooltipWidget = new TooltipWidget();
-    return tooltipWidget;
-}
 
 TooltipWidget::TooltipWidget(BaseWidget *parent)
     : BaseWindow({BaseWindow::TopMost, BaseWindow::DontFocus,
                   BaseWindow::DisableLayoutSave},
-                 parent)
+                 tooltipParentFor(parent))
 {
+    assert(parent != nullptr);
+    QObject::connect(parent, &QObject::destroyed, this, &QObject::deleteLater);
+
     this->setStyleSheet("color: #fff; background: rgba(11, 11, 11, 0.8)");
     this->setAttribute(Qt::WA_TranslucentBackground);
     this->setWindowFlag(Qt::WindowStaysOnTopHint, true);
-
-    this->setStayInScreenRect(true);
 
     // Default to using vertical layout
     this->initializeVLayout();
     this->setLayout(this->vLayout_);
     this->currentStyle_ = TooltipStyle::Vertical;
 
-    this->connections_.managedConnect(getFonts()->fontChanged, [this] {
-        this->updateFont();
-    });
+    this->connections_.managedConnect(getApp()->getFonts()->fontChanged,
+                                      [this] {
+                                          this->updateFont();
+                                      });
     this->updateFont();
 
-    auto windows = getApp()->windows;
+    auto *windows = getApp()->getWindows();
     this->connections_.managedConnect(windows->gifRepaintRequested, [this] {
+        if (!this->isVisible())
+        {
+            return;
+        }
+
         for (int i = 0; i < this->visibleEntries_; ++i)
         {
-            auto entry = this->entryAt(i);
+            auto *entry = this->entryAt(i);
             if (entry && entry->animated())
             {
                 entry->refreshPixmap();
@@ -51,23 +70,30 @@ TooltipWidget::TooltipWidget(BaseWidget *parent)
         }
     });
 
-    this->connections_.managedConnect(windows->miscUpdate, [this] {
-        bool needSizeAdjustment = false;
-        for (int i = 0; i < this->visibleEntries_; ++i)
-        {
-            auto entry = this->entryAt(i);
-            if (entry->hasImage() && entry->attemptRefresh())
+    this->connections_.managedConnect(
+        windows->layoutRequested, [this](auto *chan) {
+            if (chan != nullptr || !this->isVisible())
             {
-                bool successfullyUpdated = entry->refreshPixmap();
-                needSizeAdjustment |= successfullyUpdated;
+                return;
             }
-        }
 
-        if (needSizeAdjustment)
-        {
-            this->adjustSize();
-        }
-    });
+            bool needSizeAdjustment = false;
+            for (int i = 0; i < this->visibleEntries_; ++i)
+            {
+                auto *entry = this->entryAt(i);
+                if (entry->hasImage() && entry->attemptRefresh())
+                {
+                    bool successfullyUpdated = entry->refreshPixmap();
+                    needSizeAdjustment |= successfullyUpdated;
+                }
+            }
+
+            if (needSizeAdjustment)
+            {
+                this->adjustSize();
+                this->applyLastBoundsCheck();
+            }
+        });
 }
 
 void TooltipWidget::setOne(const TooltipEntry &entry, TooltipStyle style)
@@ -93,16 +119,17 @@ void TooltipWidget::set(const std::vector<TooltipEntry> &entries,
 
     this->setVisibleEntries(entries.size());
 
-    for (int i = 0; i < entries.size(); ++i)
+    for (size_t i = 0; i < entries.size(); ++i)
     {
-        if (auto entryWidget = this->entryAt(i))
+        if (auto *entryWidget = this->entryAt(static_cast<int>(i)))
         {
-            auto &entry = entries[i];
+            const auto &entry = entries[i];
             entryWidget->setImage(entry.image);
             entryWidget->setText(entry.text);
             entryWidget->setImageScale(entry.customWidth, entry.customHeight);
         }
     }
+    this->adjustSize();
 }
 
 void TooltipWidget::setVisibleEntries(int n)
@@ -273,15 +300,15 @@ void TooltipWidget::scaleChangedEvent(float)
 
 void TooltipWidget::updateFont()
 {
-    this->setFont(
-        getFonts()->getFont(FontStyle::ChatMediumSmall, this->scale()));
+    this->setFont(getApp()->getFonts()->getFont(FontStyle::ChatMediumSmall,
+                                                this->scale()));
 }
 
 void TooltipWidget::setWordWrap(bool wrap)
 {
     for (int i = 0; i < this->visibleEntries_; ++i)
     {
-        auto entry = this->entryAt(i);
+        auto *entry = this->entryAt(i);
         if (entry)
         {
             entry->setWordWrap(wrap);

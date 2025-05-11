@@ -3,31 +3,45 @@
 
 #    include "Application.hpp"
 #    include "common/QLogging.hpp"
-#    include "controllers/commands/CommandController.hpp"
 #    include "controllers/plugins/LuaUtilities.hpp"
 #    include "controllers/plugins/PluginController.hpp"
-#    include "messages/MessageBuilder.hpp"
-#    include "providers/twitch/TwitchIrcServer.hpp"
+#    include "controllers/plugins/SolTypes.hpp"  // for lua operations on QString{,List} for CompletionList
 
 #    include <lauxlib.h>
 #    include <lua.h>
 #    include <lualib.h>
 #    include <QFileInfo>
+#    include <QList>
 #    include <QLoggingCategory>
 #    include <QTextCodec>
+#    include <QUrl>
+#    include <sol/forward.hpp>
+#    include <sol/protected_function_result.hpp>
+#    include <sol/reference.hpp>
+#    include <sol/stack.hpp>
+#    include <sol/state_view.hpp>
+#    include <sol/types.hpp>
+#    include <sol/variadic_args.hpp>
+#    include <sol/variadic_results.hpp>
+
+#    include <stdexcept>
+#    include <string>
+#    include <utility>
 
 namespace {
 using namespace chatterino;
 
-void logHelper(lua_State *L, Plugin *pl, QDebug stream, int argc)
+void logHelper(lua_State *L, Plugin *pl, QDebug stream,
+               const sol::variadic_args &args)
 {
     stream.noquote();
     stream << "[" + pl->id + ":" + pl->meta.name + "]";
-    for (int i = 1; i <= argc; i++)
+    for (const auto &arg : args)
     {
-        stream << lua::toString(L, i);
+        stream << lua::toString(L, arg.stack_index());
+        // Remove this from our stack
+        lua_pop(L, 1);
     }
-    lua_pop(L, argc);
 }
 
 QDebug qdebugStreamForLogLevel(lua::api::LogLevel lvl)
@@ -60,277 +74,199 @@ QDebug qdebugStreamForLogLevel(lua::api::LogLevel lvl)
 // luaL_error is a c-style vararg function, this makes clang-tidy not dislike it so much
 namespace chatterino::lua::api {
 
-int c2_register_command(lua_State *L)
+CompletionList::CompletionList(const sol::table &table)
+    : values(table.get<QStringList>("values"))
+    , hideOthers(table["hide_others"])
 {
-    auto *pl = getApp()->plugins->getPluginByStatePtr(L);
-    if (pl == nullptr)
-    {
-        luaL_error(L, "internal error: no plugin");
-        return 0;
-    }
-
-    QString name;
-    if (!lua::peek(L, &name, 1))
-    {
-        luaL_error(L, "cannot get command name (1st arg of register_command, "
-                      "expected a string)");
-        return 0;
-    }
-    if (lua_isnoneornil(L, 2))
-    {
-        luaL_error(L, "missing argument for register_command: function "
-                      "\"pointer\"");
-        return 0;
-    }
-
-    auto callbackSavedName = QString("c2commandcb-%1").arg(name);
-    lua_setfield(L, LUA_REGISTRYINDEX, callbackSavedName.toStdString().c_str());
-    auto ok = pl->registerCommand(name, callbackSavedName);
-
-    // delete both name and callback
-    lua_pop(L, 2);
-
-    lua::push(L, ok);
-    return 1;
 }
 
-int c2_send_msg(lua_State *L)
+sol::table toTable(lua_State *L, const CompletionEvent &ev)
 {
-    QString text;
-    QString channel;
-    if (lua_gettop(L) != 2)
-    {
-        luaL_error(L, "send_msg needs exactly 2 arguments (channel and text)");
-        lua::push(L, false);
-        return 1;
-    }
-    if (!lua::pop(L, &text))
-    {
-        luaL_error(
-            L, "cannot get text (2nd argument of send_msg, expected a string)");
-        lua::push(L, false);
-        return 1;
-    }
-    if (!lua::pop(L, &channel))
-    {
-        luaL_error(
-            L,
-            "cannot get channel (1st argument of send_msg, expected a string)");
-        lua::push(L, false);
-        return 1;
-    }
-
-    const auto chn = getApp()->twitch->getChannelOrEmpty(channel);
-    if (chn->isEmpty())
-    {
-        auto *pl = getApp()->plugins->getPluginByStatePtr(L);
-
-        qCWarning(chatterinoLua)
-            << "Plugin" << pl->id
-            << "tried to send a message (using send_msg) to channel" << channel
-            << "which is not known";
-        lua::push(L, false);
-        return 1;
-    }
-    QString message = text;
-    message = message.replace('\n', ' ');
-    QString outText = getApp()->commands->execCommand(message, chn, false);
-    chn->sendMessage(outText);
-    lua::push(L, true);
-    return 1;
+    return sol::state_view(L).create_table_with(
+        "query", ev.query,                          //
+        "full_text_content", ev.full_text_content,  //
+        "cursor_position", ev.cursor_position,      //
+        "is_first_word", ev.is_first_word           //
+    );
 }
 
-int c2_system_msg(lua_State *L)
+void c2_register_callback(ThisPluginState L, EventType evtType,
+                          sol::protected_function callback)
 {
-    if (lua_gettop(L) != 2)
-    {
-        luaL_error(L,
-                   "system_msg needs exactly 2 arguments (channel and text)");
-        lua::push(L, false);
-        return 1;
-    }
-    QString channel;
-    QString text;
-
-    if (!lua::pop(L, &text))
-    {
-        luaL_error(
-            L,
-            "cannot get text (2nd argument of system_msg, expected a string)");
-        lua::push(L, false);
-        return 1;
-    }
-    if (!lua::pop(L, &channel))
-    {
-        luaL_error(L, "cannot get channel (1st argument of system_msg, "
-                      "expected a string)");
-        lua::push(L, false);
-        return 1;
-    }
-    const auto chn = getApp()->twitch->getChannelOrEmpty(channel);
-    if (chn->isEmpty())
-    {
-        auto *pl = getApp()->plugins->getPluginByStatePtr(L);
-        qCWarning(chatterinoLua)
-            << "Plugin" << pl->id
-            << "tried to show a system message (using system_msg) in channel"
-            << channel << "which is not known";
-        lua::push(L, false);
-        return 1;
-    }
-    chn->addMessage(makeSystemMessage(text));
-    lua::push(L, true);
-    return 1;
+    L.plugin()->callbacks[evtType] = std::move(callback);
 }
 
-int c2_log(lua_State *L)
+void c2_log(ThisPluginState L, LogLevel lvl, sol::variadic_args args)
 {
-    auto *pl = getApp()->plugins->getPluginByStatePtr(L);
-    if (pl == nullptr)
+    lua::StackGuard guard(L);
     {
-        luaL_error(L, "c2_log: internal error: no plugin?");
-        return 0;
+        QDebug stream = qdebugStreamForLogLevel(lvl);
+        logHelper(L, L.plugin(), stream, args);
     }
-    auto logc = lua_gettop(L) - 1;
-    // This is almost the expansion of qCDebug() macro, actual thing is wrapped in a for loop
-    LogLevel lvl{};
-    if (!lua::pop(L, &lvl, 1))
-    {
-        luaL_error(L, "Invalid log level, use one from c2.LogLevel.");
-        return 0;
-    }
-    QDebug stream = qdebugStreamForLogLevel(lvl);
-    logHelper(L, pl, stream, logc);
-    return 0;
 }
 
-int g_load(lua_State *L)
+void c2_later(ThisPluginState L, sol::protected_function callback, int time)
+{
+    if (time <= 0)
+    {
+        throw std::runtime_error(
+            "c2.later time must be strictly greater than zero.");
+    }
+    sol::state_view lua(L);
+
+    auto *timer = new QTimer();
+    timer->setInterval(time);
+    timer->setSingleShot(true);
+    auto id = L.plugin()->addTimeout(timer);
+    auto name = QString("timeout_%1").arg(id);
+
+    sol::state_view main = sol::main_thread(L);
+
+    sol::thread thread = sol::thread::create(main);
+    sol::protected_function cb(thread.state(), callback);
+    main.registry()[name.toStdString()] = thread;
+
+    QObject::connect(
+        timer, &QTimer::timeout,
+        [pl = L.plugin(), name, timer, cb, thread, main]() {
+            timer->deleteLater();
+            pl->removeTimeout(timer);
+            sol::protected_function_result res = cb();
+
+            if (res.return_count() != 0)
+            {
+                stackDump(thread.lua_state(),
+                          pl->id +
+                              ": timer returned a value, this shouldn't happen "
+                              "and is probably a plugin bug");
+            }
+            main.registry()[name.toStdString()] = sol::nil;
+        });
+    timer->start();
+}
+
+// TODO: Add tests for this once we run tests in debug mode
+sol::variadic_results g_load(ThisPluginState s, sol::object data)
 {
 #    ifdef NDEBUG
-    luaL_error(L, "load() is only usable in debug mode");
-    return 0;
+    (void)data;
+    (void)s;
+    throw std::runtime_error("load() is only usable in debug mode");
 #    else
-    auto countArgs = lua_gettop(L);
-    QByteArray data;
-    if (lua::peek(L, &data, 1))
-    {
-        auto *utf8 = QTextCodec::codecForName("UTF-8");
-        QTextCodec::ConverterState state;
-        utf8->toUnicode(data.constData(), data.size(), &state);
-        if (state.invalidChars != 0)
-        {
-            luaL_error(L, "invalid utf-8 in load() is not allowed");
-            return 0;
-        }
-    }
-    else
-    {
-        luaL_error(L, "using reader function in load() is not allowed");
-        return 0;
-    }
 
-    for (int i = 0; i < countArgs; i++)
-    {
-        lua_seti(L, LUA_REGISTRYINDEX, i);
-    }
-
-    // fetch load and call it
-    lua_getfield(L, LUA_REGISTRYINDEX, "real_load");
-
-    for (int i = 0; i < countArgs; i++)
-    {
-        lua_geti(L, LUA_REGISTRYINDEX, i);
-        lua_pushnil(L);
-        lua_seti(L, LUA_REGISTRYINDEX, i);
-    }
-
-    lua_call(L, countArgs, LUA_MULTRET);
-
-    return lua_gettop(L);
+    // If you're modifying this PLEASE verify it works, Sol is very annoying about serialization
+    // - Mm2PL
+    sol::state_view lua(s);
+    auto load = lua.registry()["real_load"];
+    sol::protected_function_result ret = load(data, "=(load)", "t");
+    return ret;
 #    endif
 }
 
-int g_import(lua_State *L)
+int loadfile(lua_State *L, const QString &str)
 {
-    auto countArgs = lua_gettop(L);
-    // Lua allows dofile() which loads from stdin, but this is very useless in our case
-    if (countArgs == 0)
-    {
-        lua_pushnil(L);
-        luaL_error(L, "it is not allowed to call import() without arguments");
-        return 1;
-    }
-
-    auto *pl = getApp()->plugins->getPluginByStatePtr(L);
-    QString fname;
-    if (!lua::pop(L, &fname))
-    {
-        lua_pushnil(L);
-        luaL_error(L, "chatterino g_import: expected a string for a filename");
-        return 1;
-    }
-    auto dir = QUrl(pl->loadDirectory().canonicalPath() + "/");
-    auto file = dir.resolved(fname);
-
-    qCDebug(chatterinoLua) << "plugin" << pl->id << "is trying to load" << file
-                           << "(its dir is" << dir << ")";
-    if (!dir.isParentOf(file))
-    {
-        lua_pushnil(L);
-        luaL_error(L, "chatterino g_import: filename must be inside of the "
-                      "plugin directory");
-        return 1;
-    }
-
-    auto path = file.path(QUrl::FullyDecoded);
-    QFile qf(path);
-    qf.open(QIODevice::ReadOnly);
-    if (qf.size() > 10'000'000)
-    {
-        lua_pushnil(L);
-        luaL_error(L, "chatterino g_import: size limit of 10MB exceeded, what "
-                      "the hell are you doing");
-        return 1;
-    }
-
-    // validate utf-8 to block bytecode exploits
-    auto data = qf.readAll();
-    auto *utf8 = QTextCodec::codecForName("UTF-8");
-    QTextCodec::ConverterState state;
-    utf8->toUnicode(data.constData(), data.size(), &state);
-    if (state.invalidChars != 0)
-    {
-        lua_pushnil(L);
-        luaL_error(L, "invalid utf-8 in import() target (%s) is not allowed",
-                   fname.toStdString().c_str());
-        return 1;
-    }
-
-    // fetch dofile and call it
-    lua_getfield(L, LUA_REGISTRYINDEX, "real_dofile");
-    // maybe data race here if symlink was swapped?
-    lua::push(L, path);
-    lua_call(L, 1, LUA_MULTRET);
-
-    return lua_gettop(L);
-}
-
-int g_print(lua_State *L)
-{
-    auto *pl = getApp()->plugins->getPluginByStatePtr(L);
+    auto *pl = getApp()->getPlugins()->getPluginByStatePtr(L);
     if (pl == nullptr)
     {
-        luaL_error(L, "c2_print: internal error: no plugin?");
-        return 0;
+        return luaL_error(L, "loadfile: internal error: no plugin?");
     }
-    auto argc = lua_gettop(L);
+    auto dir = QUrl(pl->loadDirectory().canonicalPath() + "/");
+
+    if (!dir.isParentOf(str))
+    {
+        // XXX: This intentionally hides the resolved path to not leak it
+        lua::push(
+            L, QString("requested module is outside of the plugin directory"));
+        return 1;
+    }
+    auto datadir = QUrl(pl->dataDirectory().canonicalPath() + "/");
+    if (datadir.isParentOf(str))
+    {
+        lua::push(L, QString("requested file is data, not code, see Chatterino "
+                             "documentation"));
+        return 1;
+    }
+
+    QFileInfo info(str);
+    if (!info.exists())
+    {
+        lua::push(L, QString("no file '%1'").arg(str));
+        return 1;
+    }
+
+    auto temp = str.toStdString();
+    const auto *filename = temp.c_str();
+
+    auto res = luaL_loadfilex(L, filename, "t");
+    // Yoinked from checkload lib/lua/src/loadlib.c
+    if (res == LUA_OK)
+    {
+        lua_pushstring(L, filename);
+        return 2;
+    }
+
+    return luaL_error(L, "error loading module '%s' from file '%s':\n\t%s",
+                      lua_tostring(L, 1), filename, lua_tostring(L, -1));
+}
+
+int searcherAbsolute(lua_State *L)
+{
+    auto name = QString::fromUtf8(luaL_checkstring(L, 1));
+    name = name.replace('.', QDir::separator());
+
+    QString filename;
+    auto *pl = getApp()->getPlugins()->getPluginByStatePtr(L);
+    if (pl == nullptr)
+    {
+        return luaL_error(L, "searcherAbsolute: internal error: no plugin?");
+    }
+
+    QFileInfo file(pl->loadDirectory().filePath(name + ".lua"));
+    return loadfile(L, file.canonicalFilePath());
+}
+
+int searcherRelative(lua_State *L)
+{
+    lua_Debug dbg;
+    lua_getstack(L, 2, &dbg);
+    lua_getinfo(L, "S", &dbg);
+    auto currentFile = QString::fromUtf8(dbg.source, dbg.srclen);
+    if (currentFile.startsWith("@"))
+    {
+        currentFile = currentFile.mid(1);
+    }
+    if (currentFile == "=[C]" || currentFile == "")
+    {
+        lua::push(
+            L,
+            QString(
+                "Unable to load relative to file:caller has no source file"));
+        return 1;
+    }
+
+    auto parent = QFileInfo(currentFile).dir();
+
+    auto name = QString::fromUtf8(luaL_checkstring(L, 1));
+    name = name.replace('.', QDir::separator());
+    QString filename =
+        parent.canonicalPath() + QDir::separator() + name + ".lua";
+
+    return loadfile(L, filename);
+}
+
+void g_print(ThisPluginState L, sol::variadic_args args)
+{
     // This is almost the expansion of qCDebug() macro, actual thing is wrapped in a for loop
     auto stream =
         (QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE,
                         QT_MESSAGELOG_FUNC, chatterinoLua().categoryName())
              .debug());
-    logHelper(L, pl, stream, argc);
-    return 0;
+    logHelper(L, L.plugin(), stream, args);
+}
+
+void package_loadlib(sol::variadic_args args)
+{
+    throw std::runtime_error("package.loadlib: this function is a stub!");
 }
 
 }  // namespace chatterino::lua::api

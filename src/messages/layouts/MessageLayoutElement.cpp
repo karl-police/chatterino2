@@ -3,9 +3,9 @@
 #include "Application.hpp"
 #include "messages/Emote.hpp"
 #include "messages/Image.hpp"
+#include "messages/layouts/MessageLayoutContext.hpp"
 #include "messages/MessageElement.hpp"
 #include "providers/twitch/TwitchEmotes.hpp"
-#include "singletons/Theme.hpp"
 #include "util/DebugCount.hpp"
 
 #include <QDebug>
@@ -60,12 +60,12 @@ bool MessageLayoutElement::hasTrailingSpace() const
     return this->trailingSpace;
 }
 
-int MessageLayoutElement::getLine() const
+size_t MessageLayoutElement::getLine() const
 {
     return this->line_;
 }
 
-void MessageLayoutElement::setLine(int line)
+void MessageLayoutElement::setLine(size_t line)
 {
     this->line_ = line;
 }
@@ -77,9 +77,9 @@ MessageLayoutElement *MessageLayoutElement::setTrailingSpace(bool value)
     return this;
 }
 
-MessageLayoutElement *MessageLayoutElement::setLink(const Link &_link)
+MessageLayoutElement *MessageLayoutElement::setLink(const Link &link)
 {
-    this->link_ = _link;
+    this->link_ = link;
     return this;
 }
 
@@ -89,9 +89,13 @@ MessageLayoutElement *MessageLayoutElement::setText(const QString &_text)
     return this;
 }
 
-const Link &MessageLayoutElement::getLink() const
+Link MessageLayoutElement::getLink() const
 {
-    return this->link_;
+    if (this->link_)
+    {
+        return *this->link_;
+    }
+    return this->creator_.getLink();
 }
 
 const QString &MessageLayoutElement::getText() const
@@ -102,6 +106,16 @@ const QString &MessageLayoutElement::getText() const
 FlagsEnum<MessageElementFlag> MessageLayoutElement::getFlags() const
 {
     return this->creator_.getFlags();
+}
+
+int MessageLayoutElement::getWordId() const
+{
+    return this->wordId_;
+}
+
+void MessageLayoutElement::setWordId(int wordId)
+{
+    this->wordId_ = wordId;
 }
 
 //
@@ -125,19 +139,20 @@ void ImageLayoutElement::addCopyTextToString(QString &str, uint32_t from,
     {
         str += emoteElement->getEmote()->getCopyString();
         str = TwitchEmotes::cleanUpEmoteCode(str);
-        if (this->hasTrailingSpace())
+        if (this->hasTrailingSpace() && to >= 2)
         {
-            str += " ";
+            str += ' ';
         }
     }
 }
 
-int ImageLayoutElement::getSelectionIndexCount() const
+size_t ImageLayoutElement::getSelectionIndexCount() const
 {
     return this->trailingSpace ? 2 : 1;
 }
 
-void ImageLayoutElement::paint(QPainter &painter)
+void ImageLayoutElement::paint(QPainter &painter,
+                               const MessageColors & /*messageColors*/)
 {
     if (this->image_ == nullptr)
     {
@@ -152,11 +167,11 @@ void ImageLayoutElement::paint(QPainter &painter)
     }
 }
 
-void ImageLayoutElement::paintAnimated(QPainter &painter, int yOffset)
+bool ImageLayoutElement::paintAnimated(QPainter &painter, int yOffset)
 {
     if (this->image_ == nullptr)
     {
-        return;
+        return false;
     }
 
     if (this->image_->animated())
@@ -166,8 +181,10 @@ void ImageLayoutElement::paintAnimated(QPainter &painter, int yOffset)
             auto rect = this->getRect();
             rect.moveTop(rect.y() + yOffset);
             painter.drawPixmap(QRectF(rect), *pixmap, QRectF());
+            return true;
         }
     }
+    return false;
 }
 
 int ImageLayoutElement::getMouseOverIndex(const QPoint &abs) const
@@ -175,7 +192,7 @@ int ImageLayoutElement::getMouseOverIndex(const QPoint &abs) const
     return 0;
 }
 
-int ImageLayoutElement::getXFromIndex(int index)
+int ImageLayoutElement::getXFromIndex(size_t index)
 {
     if (index <= 0)
     {
@@ -216,19 +233,20 @@ void LayeredImageLayoutElement::addCopyTextToString(QString &str, uint32_t from,
     {
         // cleaning is taken care in call
         str += layeredEmoteElement->getCleanCopyString();
-        if (this->hasTrailingSpace())
+        if (this->hasTrailingSpace() && to >= 2)
         {
-            str += " ";
+            str += ' ';
         }
     }
 }
 
-int LayeredImageLayoutElement::getSelectionIndexCount() const
+size_t LayeredImageLayoutElement::getSelectionIndexCount() const
 {
     return this->trailingSpace ? 2 : 1;
 }
 
-void LayeredImageLayoutElement::paint(QPainter &painter)
+void LayeredImageLayoutElement::paint(QPainter &painter,
+                                      const MessageColors & /*messageColors*/)
 {
     auto fullRect = QRectF(this->getRect());
 
@@ -263,7 +281,7 @@ void LayeredImageLayoutElement::paint(QPainter &painter)
     }
 }
 
-void LayeredImageLayoutElement::paintAnimated(QPainter &painter, int yOffset)
+bool LayeredImageLayoutElement::paintAnimated(QPainter &painter, int yOffset)
 {
     auto fullRect = QRectF(this->getRect());
     fullRect.moveTop(fullRect.y() + yOffset);
@@ -295,6 +313,7 @@ void LayeredImageLayoutElement::paintAnimated(QPainter &painter, int yOffset)
             }
         }
     }
+    return animatedFlag;
 }
 
 int LayeredImageLayoutElement::getMouseOverIndex(const QPoint &abs) const
@@ -302,7 +321,7 @@ int LayeredImageLayoutElement::getMouseOverIndex(const QPoint &abs) const
     return 0;
 }
 
-int LayeredImageLayoutElement::getXFromIndex(int index)
+int LayeredImageLayoutElement::getXFromIndex(size_t index)
 {
     if (index <= 0)
     {
@@ -329,7 +348,8 @@ ImageWithBackgroundLayoutElement::ImageWithBackgroundLayoutElement(
 {
 }
 
-void ImageWithBackgroundLayoutElement::paint(QPainter &painter)
+void ImageWithBackgroundLayoutElement::paint(
+    QPainter &painter, const MessageColors & /*messageColors*/)
 {
     if (this->image_ == nullptr)
     {
@@ -360,7 +380,8 @@ ImageWithCircleBackgroundLayoutElement::ImageWithCircleBackgroundLayoutElement(
 {
 }
 
-void ImageWithCircleBackgroundLayoutElement::paint(QPainter &painter)
+void ImageWithCircleBackgroundLayoutElement::paint(
+    QPainter &painter, const MessageColors & /*messageColors*/)
 {
     if (this->image_ == nullptr)
     {
@@ -371,6 +392,7 @@ void ImageWithCircleBackgroundLayoutElement::paint(QPainter &painter)
     if (pixmap && !this->image_->animated())
     {
         QRectF boxRect(this->getRect());
+        painter.setRenderHint(QPainter::Antialiasing);
         painter.setPen(Qt::NoPen);
         painter.setBrush(QBrush(this->color_, Qt::SolidPattern));
         painter.drawEllipse(boxRect);
@@ -399,33 +421,26 @@ TextLayoutElement::TextLayoutElement(MessageElement &_creator, QString &_text,
     this->setText(_text);
 }
 
-void TextLayoutElement::listenToLinkChanges()
-{
-    this->managedConnections_.managedConnect(
-        static_cast<TextElement &>(this->getCreator()).linkChanged, [this]() {
-            this->setLink(this->getCreator().getLink());
-        });
-}
-
 void TextLayoutElement::addCopyTextToString(QString &str, uint32_t from,
                                             uint32_t to) const
 {
     str += this->getText().mid(from, to - from);
 
-    if (this->hasTrailingSpace())
+    if (this->hasTrailingSpace() && to > this->getText().length())
     {
-        str += " ";
+        str += ' ';
     }
 }
 
-int TextLayoutElement::getSelectionIndexCount() const
+size_t TextLayoutElement::getSelectionIndexCount() const
 {
     return this->getText().length() + (this->trailingSpace ? 1 : 0);
 }
 
-void TextLayoutElement::paint(QPainter &painter)
+void TextLayoutElement::paint(QPainter &painter,
+                              const MessageColors & /*messageColors*/)
 {
-    auto app = getApp();
+    auto *app = getApp();
     QString text = this->getText();
     if (text.isRightToLeft() || this->reversedNeutral)
     {
@@ -434,15 +449,16 @@ void TextLayoutElement::paint(QPainter &painter)
 
     painter.setPen(this->color_);
 
-    painter.setFont(app->fonts->getFont(this->style_, this->scale_));
+    painter.setFont(app->getFonts()->getFont(this->style_, this->scale_));
 
     painter.drawText(
         QRectF(this->getRect().x(), this->getRect().y(), 10000, 10000), text,
         QTextOption(Qt::AlignLeft | Qt::AlignTop));
 }
 
-void TextLayoutElement::paintAnimated(QPainter &, int)
+bool TextLayoutElement::paintAnimated(QPainter & /*painter*/, int /*yOffset*/)
 {
+    return false;
 }
 
 int TextLayoutElement::getMouseOverIndex(const QPoint &abs) const
@@ -452,9 +468,9 @@ int TextLayoutElement::getMouseOverIndex(const QPoint &abs) const
         return 0;
     }
 
-    auto app = getApp();
+    auto *app = getApp();
 
-    auto metrics = app->fonts->getFontMetrics(this->style_, this->scale_);
+    auto metrics = app->getFonts()->getFontMetrics(this->style_, this->scale_);
     auto x = this->getRect().left();
 
     for (auto i = 0; i < this->getText().size(); i++)
@@ -484,23 +500,24 @@ int TextLayoutElement::getMouseOverIndex(const QPoint &abs) const
     return this->getSelectionIndexCount() - (this->hasTrailingSpace() ? 1 : 0);
 }
 
-int TextLayoutElement::getXFromIndex(int index)
+int TextLayoutElement::getXFromIndex(size_t index)
 {
-    auto app = getApp();
+    auto *app = getApp();
 
     QFontMetrics metrics =
-        app->fonts->getFontMetrics(this->style_, this->scale_);
+        app->getFonts()->getFontMetrics(this->style_, this->scale_);
 
     if (index <= 0)
     {
         return this->getRect().left();
     }
-    else if (index < this->getText().size())
+    else if (index < static_cast<size_t>(this->getText().size()))
     {
         int x = 0;
-        for (int i = 0; i < index; i++)
+        for (size_t i = 0; i < index; i++)
         {
-            x += metrics.horizontalAdvance(this->getText()[i]);
+            x += metrics.horizontalAdvance(
+                this->getText()[static_cast<QString::size_type>(i)]);
         }
         return x + this->getRect().left();
     }
@@ -527,18 +544,19 @@ void TextIconLayoutElement::addCopyTextToString(QString &str, uint32_t from,
 {
 }
 
-int TextIconLayoutElement::getSelectionIndexCount() const
+size_t TextIconLayoutElement::getSelectionIndexCount() const
 {
     return this->trailingSpace ? 2 : 1;
 }
 
-void TextIconLayoutElement::paint(QPainter &painter)
+void TextIconLayoutElement::paint(QPainter &painter,
+                                  const MessageColors &messageColors)
 {
-    auto app = getApp();
+    auto *app = getApp();
 
-    QFont font = app->fonts->getFont(FontStyle::Tiny, this->scale);
+    QFont font = app->getFonts()->getFont(FontStyle::Tiny, this->scale);
 
-    painter.setPen(app->themes->messages.textColors.system);
+    painter.setPen(messageColors.systemText);
     painter.setFont(font);
 
     QTextOption option;
@@ -561,8 +579,10 @@ void TextIconLayoutElement::paint(QPainter &painter)
     }
 }
 
-void TextIconLayoutElement::paintAnimated(QPainter &painter, int yOffset)
+bool TextIconLayoutElement::paintAnimated(QPainter & /*painter*/,
+                                          int /*yOffset*/)
 {
+    return false;
 }
 
 int TextIconLayoutElement::getMouseOverIndex(const QPoint &abs) const
@@ -570,7 +590,7 @@ int TextIconLayoutElement::getMouseOverIndex(const QPoint &abs) const
     return 0;
 }
 
-int TextIconLayoutElement::getXFromIndex(int index)
+int TextIconLayoutElement::getXFromIndex(size_t index)
 {
     if (index <= 0)
     {
@@ -598,7 +618,8 @@ ReplyCurveLayoutElement::ReplyCurveLayoutElement(MessageElement &creator,
 {
 }
 
-void ReplyCurveLayoutElement::paint(QPainter &painter)
+void ReplyCurveLayoutElement::paint(QPainter &painter,
+                                    const MessageColors & /*messageColors*/)
 {
     QRectF paintRect(this->getRect());
     QPainterPath path;
@@ -633,8 +654,10 @@ void ReplyCurveLayoutElement::paint(QPainter &painter)
     painter.drawPath(path);
 }
 
-void ReplyCurveLayoutElement::paintAnimated(QPainter &painter, int yOffset)
+bool ReplyCurveLayoutElement::paintAnimated(QPainter & /*painter*/,
+                                            int /*yOffset*/)
 {
+    return false;
 }
 
 int ReplyCurveLayoutElement::getMouseOverIndex(const QPoint &abs) const
@@ -642,7 +665,7 @@ int ReplyCurveLayoutElement::getMouseOverIndex(const QPoint &abs) const
     return 0;
 }
 
-int ReplyCurveLayoutElement::getXFromIndex(int index)
+int ReplyCurveLayoutElement::getXFromIndex(size_t index)
 {
     if (index <= 0)
     {
@@ -657,7 +680,7 @@ void ReplyCurveLayoutElement::addCopyTextToString(QString &str, uint32_t from,
 {
 }
 
-int ReplyCurveLayoutElement::getSelectionIndexCount() const
+size_t ReplyCurveLayoutElement::getSelectionIndexCount() const
 {
     return 1;
 }

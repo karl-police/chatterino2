@@ -1,9 +1,7 @@
 #ifdef CHATTERINO_HAVE_PLUGINS
 #    include "controllers/plugins/LuaUtilities.hpp"
 
-#    include "common/Channel.hpp"
 #    include "common/QLogging.hpp"
-#    include "controllers/commands/CommandContext.hpp"
 
 #    include <lauxlib.h>
 #    include <lua.h>
@@ -86,18 +84,6 @@ QString humanErrorText(lua_State *L, int errCode)
     return errName;
 }
 
-StackIdx pushEmptyArray(lua_State *L, int countArray)
-{
-    lua_createtable(L, countArray, 0);
-    return lua_gettop(L);
-}
-
-StackIdx pushEmptyTable(lua_State *L, int countProperties)
-{
-    lua_createtable(L, 0, countProperties);
-    return lua_gettop(L);
-}
-
 StackIdx push(lua_State *L, const QString &str)
 {
     return lua::push(L, str.toStdString());
@@ -109,37 +95,9 @@ StackIdx push(lua_State *L, const std::string &str)
     return lua_gettop(L);
 }
 
-StackIdx push(lua_State *L, const CommandContext &ctx)
-{
-    auto outIdx = pushEmptyTable(L, 2);
-
-    push(L, ctx.words);
-    lua_setfield(L, outIdx, "words");
-    push(L, ctx.channel->getName());
-    lua_setfield(L, outIdx, "channel_name");
-
-    return outIdx;
-}
-
-StackIdx push(lua_State *L, const bool &b)
-{
-    lua_pushboolean(L, int(b));
-    return lua_gettop(L);
-}
-
-bool peek(lua_State *L, double *out, StackIdx idx)
-{
-    int ok{0};
-    auto v = lua_tonumberx(L, idx, &ok);
-    if (ok != 0)
-    {
-        *out = v;
-    }
-    return ok != 0;
-}
-
 bool peek(lua_State *L, QString *out, StackIdx idx)
 {
+    StackGuard guard(L);
     size_t len{0};
     const char *str = lua_tolstring(L, idx, &len);
     if (str == nullptr)
@@ -151,38 +109,6 @@ bool peek(lua_State *L, QString *out, StackIdx idx)
         assert(false && "string longer than INT_MAX, shit's fucked, yo");
     }
     *out = QString::fromUtf8(str, int(len));
-    return true;
-}
-
-bool peek(lua_State *L, QByteArray *out, StackIdx idx)
-{
-    size_t len{0};
-    const char *str = lua_tolstring(L, idx, &len);
-    if (str == nullptr)
-    {
-        return false;
-    }
-    if (len >= INT_MAX)
-    {
-        assert(false && "string longer than INT_MAX, shit's fucked, yo");
-    }
-    *out = QByteArray(str, int(len));
-    return true;
-}
-
-bool peek(lua_State *L, std::string *out, StackIdx idx)
-{
-    size_t len{0};
-    const char *str = lua_tolstring(L, idx, &len);
-    if (str == nullptr)
-    {
-        return false;
-    }
-    if (len >= INT_MAX)
-    {
-        assert(false && "string longer than INT_MAX, shit's fucked, yo");
-    }
-    *out = std::string(str, len);
     return true;
 }
 

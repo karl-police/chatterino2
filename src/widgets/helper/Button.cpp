@@ -1,4 +1,4 @@
-#include "Button.hpp"
+#include "widgets/helper/Button.hpp"
 
 #include "singletons/Theme.hpp"
 #include "util/FunctionEventFilter.hpp"
@@ -8,21 +8,43 @@
 #include <QPainter>
 #include <QScreen>
 
-namespace chatterino {
 namespace {
 
-    // returns a new resized image or the old one if the size didn't change
-    auto resizePixmap(const QPixmap &current, const QPixmap resized,
-                      const QSize &size) -> QPixmap
+QSizeF deviceIndependentSize(const QPixmap &pixmap)
+{
+#if QT_VERSION < QT_VERSION_CHECK(6, 2, 0)
+    return QSizeF(pixmap.width(), pixmap.height()) / pixmap.devicePixelRatio();
+#else
+    return pixmap.deviceIndependentSize();
+#endif
+}
+
+/**
+ * Resizes a pixmap to a desired size.
+ * Does nothing if the target pixmap is already sized correctly.
+ * 
+ * @param target The target pixmap.
+ * @param source The unscaled pixmap.
+ * @param size The desired device independent size.
+ * @param dpr The device pixel ratio of the target area. The size of the target in pixels will be `size * dpr`.
+ */
+void resizePixmap(QPixmap &target, const QPixmap &source, const QSize &size,
+                  qreal dpr)
+{
+    if (deviceIndependentSize(target) == size)
     {
-        if (resized.size() == size)
-            return resized;
-        else
-            return current.scaled(size, Qt::IgnoreAspectRatio,
-                                  Qt::SmoothTransformation);
+        return;
     }
 
+    QPixmap resized = source;
+    resized.setDevicePixelRatio(dpr);
+    target = resized.scaled(size * dpr, Qt::IgnoreAspectRatio,
+                            Qt::SmoothTransformation);
+}
+
 }  // namespace
+
+namespace chatterino {
 
 Button::Button(BaseWidget *parent)
     : BaseWidget(parent)
@@ -36,15 +58,40 @@ Button::Button(BaseWidget *parent)
     this->setMouseTracking(true);
 }
 
-void Button::setMouseEffectColor(boost::optional<QColor> color)
+void Button::setMouseEffectColor(std::optional<QColor> color)
 {
     this->mouseEffectColor_ = std::move(color);
 }
 
 void Button::setPixmap(const QPixmap &_pixmap)
 {
+    // Avoid updates if the pixmap didn't change
+    if (_pixmap.cacheKey() == this->pixmap_.cacheKey())
+    {
+        return;
+    }
+
     this->pixmap_ = _pixmap;
     this->resizedPixmap_ = {};
+    this->update();
+}
+
+void Button::setSvgResource(const QString &resourcePath)
+{
+    if (resourcePath == this->svgResourcePath)
+    {
+        // Same resource path as before - nothing changed
+        return;
+    }
+
+    if (this->svgRenderer)
+    {
+        this->svgRenderer->deleteLater();
+    }
+    this->svgRenderer = new QSvgRenderer(resourcePath, this);
+    this->svgRenderer->setAspectRatioMode(Qt::KeepAspectRatio);
+    this->svgResourcePath = resourcePath;
+
     this->update();
 }
 
@@ -92,11 +139,17 @@ bool Button::getEnableMargin() const
 qreal Button::getCurrentDimAmount() const
 {
     if (this->dimPixmap_ == Dim::None || this->mouseOver_)
+    {
         return 1;
+    }
     else if (this->dimPixmap_ == Dim::Some)
+    {
         return 0.7;
+    }
     else
+    {
         return 0.15;
+    }
 }
 
 void Button::setBorderColor(const QColor &color)
@@ -114,7 +167,9 @@ const QColor &Button::getBorderColor() const
 void Button::setMenu(std::unique_ptr<QMenu> menu)
 {
     if (this->menu_)
+    {
         this->menu_.release()->deleteLater();
+    }
 
     this->menu_ = std::move(menu);
 
@@ -133,26 +188,44 @@ void Button::setMenu(std::unique_ptr<QMenu> menu)
 void Button::paintEvent(QPaintEvent *)
 {
     QPainter painter(this);
+    this->paintButton(painter);
+}
 
+void Button::paintButton(QPainter &painter)
+{
     painter.setRenderHint(QPainter::SmoothPixmapTransform);
 
-    if (!this->pixmap_.isNull())
+    if (this->svgRenderer != nullptr)
+    {
+        painter.setOpacity(this->getCurrentDimAmount());
+
+        auto rect = this->rect();
+
+        if (this->enableMargin_)
+        {
+            auto s = this->getMargin();
+            rect = {{s, s}, rect.size() - QSize{2 * s, 2 * s}};
+        }
+
+        this->svgRenderer->render(&painter, rect);
+    }
+    else if (!this->pixmap_.isNull())
     {
         painter.setOpacity(this->getCurrentDimAmount());
 
         QRect rect = this->rect();
 
-        this->resizedPixmap_ =
-            resizePixmap(this->pixmap_, this->resizedPixmap_, rect.size());
+        resizePixmap(this->resizedPixmap_, this->pixmap_, rect.size(),
+                     this->devicePixelRatio());
 
-        int margin = this->height() < 22 * this->scale() ? 3 : 6;
-
-        int s = this->enableMargin_ ? int(margin * this->scale()) : 0;
-
-        rect.moveLeft(s);
-        rect.setRight(rect.right() - s - s);
-        rect.moveTop(s);
-        rect.setBottom(rect.bottom() - s - s);
+        if (this->enableMargin_)
+        {
+            auto s = this->getMargin();
+            rect.moveLeft(s);
+            rect.setRight(rect.right() - s - s);
+            rect.moveTop(s);
+            rect.setBottom(rect.bottom() - s - s);
+        }
 
         painter.drawPixmap(rect, this->resizedPixmap_);
 
@@ -181,7 +254,7 @@ void Button::fancyPaint(QPainter &painter)
 
     if (this->mouseEffectColor_)
     {
-        c = this->mouseEffectColor_.get();
+        c = *this->mouseEffectColor_;
     }
     else
     {
@@ -218,12 +291,20 @@ void Button::enterEvent(QEnterEvent * /*event*/)
 void Button::enterEvent(QEvent * /*event*/)
 #endif
 {
-    this->mouseOver_ = true;
+    if (!this->mouseOver_)
+    {
+        this->mouseOver_ = true;
+        this->update();
+    }
 }
 
-void Button::leaveEvent(QEvent *)
+void Button::leaveEvent(QEvent * /*event*/)
 {
-    this->mouseOver_ = false;
+    if (this->mouseOver_)
+    {
+        this->mouseOver_ = false;
+        this->update();
+    }
 }
 
 void Button::mousePressEvent(QMouseEvent *event)
@@ -242,7 +323,7 @@ void Button::mousePressEvent(QMouseEvent *event)
 
     this->mouseDown_ = true;
 
-    emit this->leftMousePress();
+    this->leftMousePress();
 
     if (this->menu_ && !this->menuVisible_)
     {
@@ -257,17 +338,26 @@ void Button::mousePressEvent(QMouseEvent *event)
 void Button::mouseReleaseEvent(QMouseEvent *event)
 {
     if (!this->enabled_)
+    {
         return;
+    }
+
+    bool isInside = this->rect().contains(event->pos());
 
     if (event->button() == Qt::LeftButton)
     {
         this->mouseDown_ = false;
 
-        if (this->rect().contains(event->pos()))
-            emit leftClicked();
+        if (isInside)
+        {
+            leftClicked();
+        }
     }
 
-    emit clicked(event->button());
+    if (isInside)
+    {
+        clicked(event->button());
+    }
 }
 
 void Button::mouseMoveEvent(QMouseEvent *event)
@@ -341,7 +431,9 @@ void Button::onMouseEffectTimeout()
 void Button::showMenu()
 {
     if (!this->menu_)
+    {
         return;
+    }
 
     auto menuSizeHint = this->menu_->sizeHint();
     auto point = this->mapToGlobal(
@@ -362,6 +454,15 @@ void Button::showMenu()
 
     this->menu_->popup(point);
     this->menuVisible_ = true;
+}
+
+int Button::getMargin() const
+{
+    assert(this->enableMargin_);
+
+    int baseMargin = this->height() < 22 * this->scale() ? 3 : 6;
+
+    return static_cast<int>(baseMargin * this->scale());
 }
 
 }  // namespace chatterino

@@ -1,4 +1,8 @@
-#include "DraggablePopup.hpp"
+#include "widgets/DraggablePopup.hpp"
+
+#include "singletons/Resources.hpp"
+#include "singletons/Theme.hpp"
+#include "widgets/helper/Button.hpp"
 
 #include <QMouseEvent>
 
@@ -9,32 +13,41 @@ namespace chatterino {
 namespace {
 
 #ifdef Q_OS_LINUX
-    FlagsEnum<BaseWindow::Flags> popupFlags{BaseWindow::Dialog,
-                                            BaseWindow::EnableCustomFrame};
+    FlagsEnum<BaseWindow::Flags> popupFlags{
+        BaseWindow::Dialog,
+        BaseWindow::EnableCustomFrame,
+    };
     FlagsEnum<BaseWindow::Flags> popupFlagsCloseAutomatically{
-        BaseWindow::EnableCustomFrame};
+        BaseWindow::Dialog,
+        BaseWindow::EnableCustomFrame,
+    };
 #else
-    FlagsEnum<BaseWindow::Flags> popupFlags{BaseWindow::EnableCustomFrame};
+    FlagsEnum<BaseWindow::Flags> popupFlags{
+        BaseWindow::EnableCustomFrame,
+    };
     FlagsEnum<BaseWindow::Flags> popupFlagsCloseAutomatically{
-        BaseWindow::EnableCustomFrame, BaseWindow::Frameless,
-        BaseWindow::FramelessDraggable};
+        BaseWindow::EnableCustomFrame,
+        BaseWindow::Frameless,
+        BaseWindow::FramelessDraggable,
+    };
 #endif
 
 }  // namespace
 
 DraggablePopup::DraggablePopup(bool closeAutomatically, QWidget *parent)
     : BaseWindow(
-          closeAutomatically
-              ? popupFlagsCloseAutomatically | BaseWindow::DisableLayoutSave
-              : popupFlags | BaseWindow::DisableLayoutSave,
+          (closeAutomatically ? popupFlagsCloseAutomatically : popupFlags) |
+              BaseWindow::DisableLayoutSave |
+              BaseWindow::ClearBuffersOnDpiChange,
           parent)
     , lifetimeHack_(std::make_shared<bool>(false))
+    , closeAutomatically_(closeAutomatically)
     , dragTimer_(this)
 
 {
     if (closeAutomatically)
     {
-        this->setActionOnFocusLoss(BaseWindow::Delete);
+        this->windowDeactivateAction = WindowDeactivateAction::Delete;
     }
     else
     {
@@ -65,7 +78,7 @@ void DraggablePopup::mousePressEvent(QMouseEvent *event)
     {
         this->dragTimer_.start(std::chrono::milliseconds(17));
         this->startPosDrag_ = event->pos();
-        this->movingRelativePos = event->localPos();
+        this->movingRelativePos = event->position();
     }
 }
 
@@ -85,9 +98,45 @@ void DraggablePopup::mouseMoveEvent(QMouseEvent *event)
     if (this->isMoving_ || movePos.manhattanLength() > 10.0)
     {
         this->requestedDragPos_ =
-            (event->screenPos() - this->movingRelativePos).toPoint();
+            (event->globalPosition() - this->movingRelativePos).toPoint();
         this->isMoving_ = true;
     }
+}
+
+void DraggablePopup::togglePinned()
+{
+    this->isPinned_ = !isPinned_;
+    if (isPinned_)
+    {
+        this->windowDeactivateAction = WindowDeactivateAction::Nothing;
+        this->pinButton_->setPixmap(getResources().buttons.pinEnabled);
+    }
+    else
+    {
+        this->windowDeactivateAction = WindowDeactivateAction::Delete;
+        this->pinButton_->setPixmap(getTheme()->buttons.pin);
+    }
+}
+Button *DraggablePopup::createPinButton()
+{
+    this->pinButton_ = new Button(this);
+    this->pinButton_->setPixmap(getTheme()->buttons.pin);
+    this->pinButton_->setScaleIndependentSize(18, 18);
+    this->pinButton_->setToolTip("Pin Window");
+
+    QObject::connect(this->pinButton_, &Button::leftClicked, this,
+                     &DraggablePopup::togglePinned);
+    return this->pinButton_;
+}
+
+bool DraggablePopup::ensurePinned()
+{
+    if (this->closeAutomatically_ && !this->isPinned_)
+    {
+        this->togglePinned();
+        return true;
+    }
+    return false;
 }
 
 }  // namespace chatterino

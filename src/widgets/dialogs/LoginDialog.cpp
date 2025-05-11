@@ -2,10 +2,11 @@
 
 #include "Application.hpp"
 #include "common/Common.hpp"
-#include "common/NetworkRequest.hpp"
+#include "common/network/NetworkRequest.hpp"
 #include "common/QLogging.hpp"
 #include "controllers/accounts/AccountController.hpp"
 #include "providers/twitch/TwitchAccount.hpp"
+#include "singletons/Settings.hpp"
 #include "util/Clipboard.hpp"
 #include "util/Helpers.hpp"
 
@@ -66,8 +67,9 @@ namespace {
         pajlada::Settings::Setting<QString>::set(basePath + "/oauthToken",
                                                  oauthToken);
 
-        getApp()->accounts->twitch.reloadUsers();
-        getApp()->accounts->twitch.currentUsername = username;
+        getApp()->getAccounts()->twitch.reloadUsers();
+        getApp()->getAccounts()->twitch.currentUsername = username;
+        getSettings()->requestSave();
         return true;
     }
 
