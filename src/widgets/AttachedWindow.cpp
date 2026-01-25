@@ -280,7 +280,10 @@ void AttachedWindow::updateWindowRect(void *_attachedPtr)
     {
         scale = *dpi / 96.f;
         ourScale = *dpi / 96.f;
+        qDebug() << "[AttachedWindow] var dpi: "  << *dpi;
+        qDebug() << "[AttachedWindow] var scale: "  << scale;
         qDebug() << "[AttachedWindow] devicePixelRatio: "  << this->devicePixelRatio();
+        qDebug() << "[AttachedWindow] ourScale commented out: "  << ( scale / this->devicePixelRatio() );
         //ourScale = scale / this->devicePixelRatio();
 
         for (auto w : this->ui_.split->findChildren<BaseWidget *>())
