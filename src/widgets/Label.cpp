@@ -115,6 +115,18 @@ void Label::paintEvent(QPaintEvent * /*event*/)
 
     auto metrics = this->getFontMetrics();
 
+    qreal deviceDpi =
+    #ifdef Q_OS_WIN
+            this->devicePixelRatioF();
+    #else
+            1.0;
+    #endif
+    painter.setFont(getApp()->getFonts()->getFont(
+        this->getFontStyle(),
+        this->scale() * 96.f /
+            std::max<float>(
+                0.02F, static_cast<float>(this->logicalDpiX() * deviceDpi))));
+    
     //painter.setFont(
     //    getApp()->getFonts()->getFont(this->getFontStyle(), this->scale()));
 
@@ -177,17 +189,12 @@ QFontMetricsF Label::getFontMetrics() const
             1.0;
     #endif
     
-    return getIApp()->getFonts()->getFontMetrics(
+    return getApp()->getFonts()->getFontMetrics(
         this->getFontStyle(),
         this->scale() * 96.f /
             std::max<float>(
                 0.01F, static_cast<float>(this->logicalDpiX() * deviceDpi)));
-    painter.setFont(getIApp()->getFonts()->getFont(
-        this->getFontStyle(),
-        this->scale() * 96.f /
-            std::max<float>(
-                0.02F, static_cast<float>(this->logicalDpiX() * deviceDpi))));
-    
+
     //return getApp()->getFonts()->getFontMetrics(this->fontStyle_,
     //                                            this->scale());
 }
