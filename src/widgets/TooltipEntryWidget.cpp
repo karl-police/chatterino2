@@ -88,7 +88,7 @@ bool TooltipEntryWidget::refreshPixmap()
         this->attemptRefresh_ = true;
         return false;
     }
-    pixmap->setDevicePixelRatio(this->devicePixelRatio());
+    //pixmap->setDevicePixelRatio(this->devicePixelRatio());
 
     if (!this->customSize.isEmpty())
     {
