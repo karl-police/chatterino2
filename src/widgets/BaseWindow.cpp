@@ -872,7 +872,7 @@ bool BaseWindow::nativeEvent(const QByteArray &eventType, void *message,
                 ScreenToClient(msg->hwnd, &p);
 
                 QPoint globalPos(p.x, p.y);
-                globalPos /= this->devicePixelRatio();
+                //globalPos /= this->devicePixelRatio();
                 globalPos = this->mapToGlobal(globalPos);
 
                 // TODO(nerix): use TrackMouseEvent here
@@ -937,7 +937,7 @@ bool BaseWindow::nativeEvent(const QByteArray &eventType, void *message,
             ScreenToClient(msg->hwnd, &p);
 
             QPoint globalPos(p.x, p.y);
-            globalPos /= this->devicePixelRatio();
+            //globalPos /= this->devicePixelRatio();
             globalPos = this->mapToGlobal(globalPos);
 
             if (msg->message == WM_NCLBUTTONDOWN)
@@ -969,8 +969,11 @@ void BaseWindow::scaleChangedEvent(float scale)
     this->calcButtonsSizes();
 #endif
 
+    //this->setFont(
+    //    getApp()->getFonts()->getFont(FontStyle::UiTabs, this->scale()));
+
     this->setFont(
-        getApp()->getFonts()->getFont(FontStyle::UiTabs, this->scale()));
+        getApp()->getFonts()->getFont(FontStyle::UiTabs, 10.0f);
 }
 
 void BaseWindow::paintEvent(QPaintEvent *)
