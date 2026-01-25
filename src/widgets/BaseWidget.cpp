@@ -77,7 +77,8 @@ void BaseWidget::setScale(float value)
     this->setScaleIndependentSize(this->scaleIndependentSize());
 }
 
-float BaseWidget::qtFontScale() const
+// https://github.com/Nerixyz/chatterino2/blob/5c0219c245364306f2344ed600a64324f6519807/src/widgets/BaseWindow.cpp
+/*float BaseWidget::qtFontScale() const
 {
     if (auto *window = dynamic_cast<BaseWindow *>(this->window()))
     {
@@ -88,7 +89,7 @@ float BaseWidget::qtFontScale() const
     {
         return this->scale();
     }
-}
+}*/
 
 void BaseWidget::setOverrideScale(std::optional<float> value)
 {
