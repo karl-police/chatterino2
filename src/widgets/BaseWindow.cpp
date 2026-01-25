@@ -304,6 +304,11 @@ float BaseWindow::scale() const
     return std::max<float>(0.01f, this->overrideScale().value_or(this->scale_));
 }
 
+float BaseWindow::qtFontScale() const
+{
+    return this->scale() / std::max<float>(0.01, this->nativeScale_);
+}
+
 void BaseWindow::init()
 {
 #ifdef USEWINSDK
