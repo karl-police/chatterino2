@@ -623,6 +623,7 @@ void ChannelView::scaleChangedEvent(float scale)
 
     if (this->goToBottom_)
     {
+        //auto factor = this->qtFontScale();
         auto factor = this->scale();
 #ifdef Q_OS_MACOS
         factor = scale * 80.F /
