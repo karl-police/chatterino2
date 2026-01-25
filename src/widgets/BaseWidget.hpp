@@ -37,6 +37,7 @@ public:
     void setScaleIndependentSize(QSize);
     void setScaleIndependentWidth(int value);
     void setScaleIndependentHeight(int value);
+    float qtFontScale() const;
 
 protected:
     void childEvent(QChildEvent *) override;
