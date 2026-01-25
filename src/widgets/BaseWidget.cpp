@@ -77,6 +77,19 @@ void BaseWidget::setScale(float value)
     this->setScaleIndependentSize(this->scaleIndependentSize());
 }
 
+float BaseWidget::qtFontScale() const
+{
+    if (auto *window = dynamic_cast<BaseWindow *>(this->window()))
+    {
+        // ensure no div by 0
+        return this->scale() / std::max<float>(0.01f, window->nativeScale_);
+    }
+    else
+    {
+        return this->scale();
+    }
+}
+
 void BaseWidget::setOverrideScale(std::optional<float> value)
 {
     this->overrideScale_ = value;
