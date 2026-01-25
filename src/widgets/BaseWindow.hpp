@@ -90,6 +90,7 @@ public:
     bool applyLastBoundsCheck();
 
     float scale() const override;
+    float qtFontScale() const;
 
     /// @returns true if the window is the top-most window.
     ///          Either #setTopMost was called or the `TopMost` flag is set which overrides this
