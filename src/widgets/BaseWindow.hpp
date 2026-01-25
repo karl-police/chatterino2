@@ -191,6 +191,7 @@ private:
     bool frameless_;
     bool shown_ = false;
     FlagsEnum<Flags> flags_;
+    float nativeScale_ = 1;
     bool isTopMost_ = false;
 
     struct {
