@@ -170,6 +170,13 @@ void Label::resizeEvent(QResizeEvent *event)
 
 QFontMetricsF Label::getFontMetrics() const
 {
+    qreal deviceDpi =
+    #ifdef Q_OS_WIN
+            this->devicePixelRatioF();
+    #else
+            1.0;
+    #endif
+    
     return getIApp()->getFonts()->getFontMetrics(
         this->getFontStyle(),
         this->scale() * 96.f /
