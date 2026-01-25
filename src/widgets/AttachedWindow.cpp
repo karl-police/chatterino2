@@ -10,6 +10,8 @@
 #include "util/DebugCount.hpp"
 #include "widgets/splits/Split.hpp"
 
+#include <QDebug> // test
+
 #include <QTimer>
 #include <QVBoxLayout>
 
@@ -277,7 +279,9 @@ void AttachedWindow::updateWindowRect(void *_attachedPtr)
     if (auto dpi = getWindowDpi(attached))
     {
         scale = *dpi / 96.f;
-        ourScale = scale / this->devicePixelRatio();
+        ourScale = *dpi / 96.f;
+        qDebug() << this->devicePixelRatio();
+        //ourScale = scale / this->devicePixelRatio();
 
         for (auto w : this->ui_.split->findChildren<BaseWidget *>())
         {
