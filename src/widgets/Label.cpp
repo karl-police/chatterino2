@@ -115,8 +115,8 @@ void Label::paintEvent(QPaintEvent * /*event*/)
 
     auto metrics = this->getFontMetrics();
 
-    painter.setFont(
-        getApp()->getFonts()->getFont(this->getFontStyle(), this->scale()));
+    //painter.setFont(
+    //    getApp()->getFonts()->getFont(this->getFontStyle(), this->scale()));
 
     // draw text
     QRectF textRect = this->textRect();
@@ -170,8 +170,19 @@ void Label::resizeEvent(QResizeEvent *event)
 
 QFontMetricsF Label::getFontMetrics() const
 {
-    return getApp()->getFonts()->getFontMetrics(this->fontStyle_,
-                                                this->scale());
+    return getIApp()->getFonts()->getFontMetrics(
+        this->getFontStyle(),
+        this->scale() * 96.f /
+            std::max<float>(
+                0.01F, static_cast<float>(this->logicalDpiX() * deviceDpi)));
+    painter.setFont(getIApp()->getFonts()->getFont(
+        this->getFontStyle(),
+        this->scale() * 96.f /
+            std::max<float>(
+                0.02F, static_cast<float>(this->logicalDpiX() * deviceDpi))));
+    
+    //return getApp()->getFonts()->getFontMetrics(this->fontStyle_,
+    //                                            this->scale());
 }
 
 void Label::updateSize()
